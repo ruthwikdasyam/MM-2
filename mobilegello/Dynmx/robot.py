@@ -16,49 +16,46 @@ class MotorControlType(Enum):
 
 
 class Robot:
-    def __init__(self, dynamixel, baudrate=1_000_000, servo_ids=[1, 2, 3, 4, 5]):
+    def __init__(self, dynamixel, baudrate=57_600, servo_ids=[1, 2, 3, 4, 5]):
         self.servo_ids = servo_ids
         self.dynamixel = dynamixel
         # self.P_gains = [740, 800, 750, 500, 450, 400]
         # self.I_gains = [120, 120, 120, 50, 50, 0]
         # self.profile_velocities = [8, 8, 8, 10, 10, 10]
 
-        p_value = 900
-        i_value = 1000
-        d_value = 1000
+        p_value = 640
+        i_value = 27
+        d_value = 100
 
-        p2_value = 1500
-        i2_value = 600
-        d2_value = 1000
+        p2_value = 680
+        i2_value = 37
+        d2_value = 3600
 
-        p3_value = 1500
-        i3_value = 700
-        d3_value = 900
+        p3_value = 680
+        i3_value = 60
+        d3_value = 20
 
-        p4_value = 700
-        i4_value = 100
-        d4_value = 200
+        p4_value = 620
+        i4_value = 50
+        d4_value = 0
 
-        p5_value = 600
-        i5_value = 50
-        d5_value = 50
+        p5_value = 0
+        i5_value = 0
+        d5_value = 0
 
-        p6_value = 500
-        i6_value = 50
-        d6_value = 50
 
-        self.P_gains = [p_value, p2_value, p3_value, p4_value, p5_value, p6_value]
-        self.I_gains = [i_value, i2_value, i3_value, i4_value, i5_value, i6_value]
-        self.D_gains = [d_value, d2_value, d3_value, d4_value, d5_value, d6_value]
+        self.P_gains = [p_value, p2_value, p3_value, p4_value, p5_value]
+        self.I_gains = [i_value, i2_value, i3_value, i4_value, i5_value]
+        self.D_gains = [d_value, d2_value, d3_value, d4_value, d5_value]
 
         # self.profile_velocities = [10, 10, 10, 10, 10, 10]
         # 10 was working
-        self.vel1_num = 100
-        self.vel_num = 100
+        self.vel1_num = 0
+        self.vel_num = 0
         self.profile_velocities = [self.vel1_num, self.vel1_num, self.vel1_num, self.vel_num, self.vel_num, self.vel_num]
         # 3 was working
-        self.acc1_num = 50
-        self.acc_num =50
+        self.acc1_num = 0
+        self.acc_num =0
         self.profile_acceleration = [self.acc1_num, self.acc1_num, self.acc1_num, self.acc_num, self.acc_num, self.acc_num]
         # self.profile_acceleration = [0, 0, 0, 0, 0, 0]
         # self.profile_acceleration = [3, 3, 3, 3, 3, 3]

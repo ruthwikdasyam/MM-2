@@ -17,29 +17,31 @@ class GELLOcontroller:
     def __init__(self, Robot_str: str, torque_start=False) -> None:
         print("Initializing GELLO Controller")
 
-        if Robot_str == "Leader":
-            self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8ISZZM-if00-port0"
-            self.baudrate = 4000000
-            self.servo_ids = [1, 2, 3, 4, 5, 6]
-            print("Passive Connected")
-        elif Robot_str == "Follower":
+        if Robot_str == "doodle":
             self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
-            self.baudrate = 4000000
-            self.servo_ids = [1, 2, 3, 4, 5, 6]
-            print("Active Connected")
+            self.baudrate = 57600
+            self.servo_ids = [1, 2, 3, 4, 5]
+            print("Passive Connected")
+        # elif Robot_str == "Follower":
+        #     self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
+        #     self.baudrate = 4000000
+        #     self.servo_ids = [1, 2, 3, 4, 5, 6]
+        #     print("Active Connected")
+          
+          
             # self.home_config = np.array([1024, 2048, 2872, 1024, 2048, 2048])
 
         # self.radians_home_CONFIG = np.array([3.14,-1.57,-1.57,0,1.57,1.57])
         # self.encoder_home_CONFIG = np.array([1024,2048,2872,1024,3072,1024])
 
         # self.radians_home_CONFIG = np.array([3.14,-1.57,-0.785,-2.356,1.57,3.14])
-        self.radians_home_CONFIG = np.array([np.pi, -np.pi/2, -np.pi/4, -3*np.pi/4, np.pi/2, np.pi])
-        self.encoder_home_CONFIG = np.array([2048, 2048 , 2048 ,3072, 2048,1024])
+        # self.radians_home_CONFIG = np.array([np.pi, -np.pi/2, -np.pi/4, -3*np.pi/4, np.pi/2, np.pi])
+        self.encoder_home_CONFIG = np.array([2048, 2248, 3072, 3072, 2048])
         # home here - 1024, 2048, 3384, 512, 3072, 512
 
         self.dynamixel = Dynamixel.Config(baudrate=self.baudrate, device_name=self.device_name).instantiate()
         self.robot = Robot(self.dynamixel, servo_ids=self.servo_ids)
-        self.petercorke = GELLO()
+        # self.petercorke = GELLO()
 
         if torque_start:
             print("Starting Torque")
@@ -50,7 +52,7 @@ class GELLOcontroller:
 
         # time.sleep(2)
 
-        if Robot_str == "Follower":        
+        if Robot_str == "doodle":        
             # set gains
             self.robot.set_gains()
             self.P_gains = [self.robot.read_p_gain(i) for i in self.servo_ids]
@@ -88,34 +90,34 @@ class GELLOcontroller:
         return joint_angles
     
 
-    def read_ee_position(self):
-        """
-        Reads the end effector position of the robot.
-        :param
-        :return: list of end effector position in [x, y, z]
-        """
-        return self.petercorke.fkine(self.read_joint_position()).t
+    # def read_ee_position(self):
+    #     """
+    #     Reads the end effector position of the robot.
+    #     :param
+    #     :return: list of end effector position in [x, y, z]
+    #     """
+    #     return self.petercorke.fkine(self.read_joint_position()).t
     
-    def read_ee_and_joint_positions(self):
-        joint_angles = self.angles_from_encoders(self.robot.read_position())
-        ee_position = self.petercorke.fkine(joint_angles).t
-        return joint_angles, ee_position
+    # def read_ee_and_joint_positions(self):
+    #     joint_angles = self.angles_from_encoders(self.robot.read_position())
+    #     ee_position = self.petercorke.fkine(joint_angles).t
+    #     return joint_angles, ee_position
 
 
-    def read_ee_orientation(self, format="quaternion"):
-        """
-        Reads the end effector orientation of the robot.
-        :param
-        :return: list of end effector orientation in [x, y, z, w]
-        """
-        R = np.array(self.petercorke.fkine(self.read_joint_position()))[:3, :3]
-        if format == "quaternion":
-            r= Rotation.from_matrix(R)
-            orientation = r.as_quat()
-        elif format == "euler":
-            r= Rotation.from_matrix(R)
-            orientation = r.as_euler('xyz', degrees=True)
-        return orientation
+    # def read_ee_orientation(self, format="quaternion"):
+    #     """
+    #     Reads the end effector orientation of the robot.
+    #     :param
+    #     :return: list of end effector orientation in [x, y, z, w]
+    #     """
+    #     R = np.array(self.petercorke.fkine(self.read_joint_position()))[:3, :3]
+    #     if format == "quaternion":
+    #         r= Rotation.from_matrix(R)
+    #         orientation = r.as_quat()
+    #     elif format == "euler":
+    #         r= Rotation.from_matrix(R)
+    #         orientation = r.as_euler('xyz', degrees=True)
+    #     return orientation
 
 
     def read_gripper_position(self):
@@ -146,7 +148,7 @@ class GELLOcontroller:
             encoders_goal_pos = self.encoders_from_angles(goal_pos)
         # check if target position is reachable
 
-        # if not self.encoders_in_limits(encoders_goal_pos):
+        # if not self.encoders_in_lencoders_goal_posimits(encoders_goal_pos):
         #     print("Target position is not in encoder limits")
         #     return
         # print("Encoders Goal Pos: ", encoders_goal_pos)
@@ -154,67 +156,67 @@ class GELLOcontroller:
 
 
 
-    def set_ee_position(self, goal_config, Matrix=False, open_loop=False):
-        """
-        Sets the goal end effector position of the robot.
-        :param goal_pos: list of end effector position in [x, y, z]
-        """
-        # orentation of end effector - [change]
-        if Matrix:
-            Te = goal_config
-        else:
-            # Te = SE3.Trans(goal_config)*SE3.OA([0,0,1],[0,1,0]) 
-            Te = SE3.Trans(goal_config)*SE3.OA([-1,0,0],[0,0,-1])
-        # check if ee is in workspace
-        # if not self.ee_in_workspace(Te.t):
-        #     print("End effector position is not in workspace")
-        #     return
-        # print("Te: ", Te)
-        # cp1 = time.time()
+    # def set_ee_position(self, goal_config, Matrix=False, open_loop=False):
+    #     """
+    #     Sets the goal end effector position of the robot.
+    #     :param goal_pos: list of end effector position in [x, y, z]
+    #     """
+    #     # orentation of end effector - [change]
+    #     if Matrix:
+    #         Te = goal_config
+    #     else:
+    #         # Te = SE3.Trans(goal_config)*SE3.OA([0,0,1],[0,1,0]) 
+    #         Te = SE3.Trans(goal_config)*SE3.OA([-1,0,0],[0,0,-1])
+    #     # check if ee is in workspace
+    #     # if not self.ee_in_workspace(Te.t):
+    #     #     print("End effector position is not in workspace")
+    #     #     return
+    #     # print("Te: ", Te)
+    #     # cp1 = time.time()
 
-        sol = self.petercorke.ikine_NR(Te, q0=self.read_joint_position(), ilimit = 30, slimit= 100, tol=1e-2)
-        # cp2 = time.time()
-        # print("sol: ", sol)
-        target_position = sol.q
+    #     sol = self.petercorke.ikine_NR(Te, q0=self.read_joint_position(), ilimit = 30, slimit= 100, tol=1e-2)
+    #     # cp2 = time.time()
+    #     # print("sol: ", sol)
+    #     target_position = sol.q
 
-        # ik returns angles between -180 to +180 irrespective of where the current position is.
-        # But, as we need it to have limits of + and -180 from current configuration
-        # we write that calibration manually
-        # [3.14,-1.57,-0.785,-2.356,1.57,3.14]
+    #     # ik returns angles between -180 to +180 irrespective of where the current position is.
+    #     # But, as we need it to have limits of + and -180 from current configuration
+    #     # we write that calibration manually
+    #     # [3.14,-1.57,-0.785,-2.356,1.57,3.14]
 
-        for i in range(6):
-            if i == 0 or i==5:
-                if target_position[i] < 0:
-                    target_position[i] = target_position[i] + 2*pi
-            if i == 1:
-                if target_position[i] > pi/2:
-                    target_position[i] = target_position[i] - 2*pi
-            if i == 2:
-                if target_position[i] > 3*pi/4:
-                    target_position[i] = target_position[i] - 2*pi
-            if i == 3:
-                if target_position[i] > pi/4:
-                    target_position[i] = target_position[i] - 2*pi
-            if i == 4:
-                if target_position[i] < -pi/2:
-                    target_position[i] = target_position[i] + 2*pi
+    #     for i in range(6):
+    #         if i == 0 or i==5:
+    #             if target_position[i] < 0:
+    #                 target_position[i] = target_position[i] + 2*pi
+    #         if i == 1:
+    #             if target_position[i] > pi/2:
+    #                 target_position[i] = target_position[i] - 2*pi
+    #         if i == 2:
+    #             if target_position[i] > 3*pi/4:
+    #                 target_position[i] = target_position[i] - 2*pi
+    #         if i == 3:
+    #             if target_position[i] > pi/4:
+    #                 target_position[i] = target_position[i] - 2*pi
+    #         if i == 4:
+    #             if target_position[i] < -pi/2:
+    #                 target_position[i] = target_position[i] + 2*pi
 
 
 
-        target_encoders = self.encoders_from_angles(target_position)
-        # print("Target Encoders: ", target_encoders)
+    #     target_encoders = self.encoders_from_angles(target_position)
+    #     # print("Target Encoders: ", target_encoders)
 
-        # check if target position is reachable
-        # if not self.encoders_in_limits(target_encoders):
-        #     print("Target position is not in encoders limits")
-            # return
+    #     # check if target position is reachable
+    #     # if not self.encoders_in_limits(target_encoders):
+    #     #     print("Target position is not in encoders limits")
+    #         # return
 
-        # move to target position
-        target_encoders[5]=self.encoder_home_CONFIG[5]
-        # print("Time taken for IK: ", cp2-cp1)
-        self.goto_controlled_config(target_encoders)
+    #     # move to target position
+    #     target_encoders[5]=self.encoder_home_CONFIG[5]
+    #     # print("Time taken for IK: ", cp2-cp1)
+    #     self.goto_controlled_config(target_encoders)
 
-        return target_position
+    #     return target_position
     
     
 
@@ -266,6 +268,7 @@ class GELLOcontroller:
         :param encoders: list of encoder values in range 1024 to either sides from their home position
         :return: boolean
         """
+        # Can pull its limits from address where 
         threshold = 2048
         for i in range(6):
             if not self.encoder_home_CONFIG[i]-threshold < encoders[i] < self.encoder_home_CONFIG[i]+threshold:
@@ -364,13 +367,14 @@ class GELLOcontroller:
         # else:
             # max_iter = 5
 
-        for i in range(6):
+# make below lines generalized with number of motors 
+        for i in range(5):
             encoder_values.append(np.linspace(self.robot.read_position()[i], config[i], max_iter).astype(int))
 
         for i in range(max_iter):
             # print(f"Moving to config {i}")
-            print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i])
-            self.robot.set_goal_pos([encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i]])
+            print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i])
+            self.robot.set_goal_pos([encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i]])
             time.sleep(0.02) # adjust this value to change the speed of the robot
 
         self.robot.set_goal_pos(config)
