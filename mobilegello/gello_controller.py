@@ -20,7 +20,7 @@ class GELLOcontroller:
         if Robot_str == "doodle":
             self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
             self.baudrate = 57600
-            self.servo_ids = [1, 2, 3, 4, 5]
+            self.servo_ids = [1, 2, 3, 4, 5, 6]
             print("Passive Connected")
         # elif Robot_str == "Follower":
         #     self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
@@ -36,7 +36,7 @@ class GELLOcontroller:
 
         # self.radians_home_CONFIG = np.array([3.14,-1.57,-0.785,-2.356,1.57,3.14])
         # self.radians_home_CONFIG = np.array([np.pi, -np.pi/2, -np.pi/4, -3*np.pi/4, np.pi/2, np.pi])
-        self.encoder_home_CONFIG = np.array([2048, 2248, 3072, 3072, 2048])
+        self.encoder_home_CONFIG = np.array([2048, 2248, 3072, 3072, 2048, 3100])
         # home here - 1024, 2048, 3384, 512, 3072, 512
 
         self.dynamixel = Dynamixel.Config(baudrate=self.baudrate, device_name=self.device_name).instantiate()
@@ -368,15 +368,16 @@ class GELLOcontroller:
             # max_iter = 5
 
 # make below lines generalized with number of motors 
-        for i in range(5):
+        for i in range(6):
             encoder_values.append(np.linspace(self.robot.read_position()[i], config[i], max_iter).astype(int))
 
         for i in range(max_iter):
             # print(f"Moving to config {i}")
-            print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i])
-            self.robot.set_goal_pos([encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i]])
-            time.sleep(0.02) # adjust this value to change the speed of the robot
+            print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i])
+            self.robot.set_goal_pos([encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i]])
+            time.sleep(0.01) # adjust this value to change the speed of the robot
 
+        time.sleep(2)
         self.robot.set_goal_pos(config)
         # Add delay to ensure the robot reaches the goal config
         print("Reached Goal Config")

@@ -16,7 +16,7 @@ class MotorControlType(Enum):
 
 
 class Robot:
-    def __init__(self, dynamixel, baudrate=57_600, servo_ids=[1, 2, 3, 4, 5]):
+    def __init__(self, dynamixel, baudrate=57_600, servo_ids=[1, 2, 3, 4, 5, 6]):
         self.servo_ids = servo_ids
         self.dynamixel = dynamixel
         # self.P_gains = [740, 800, 750, 500, 450, 400]
@@ -39,14 +39,17 @@ class Robot:
         i4_value = 50
         d4_value = 0
 
-        p5_value = 0
+        p5_value = 400
         i5_value = 0
         d5_value = 0
 
+        p6_value = 400
+        i6_value = 0
+        d6_value = 0
 
-        self.P_gains = [p_value, p2_value, p3_value, p4_value, p5_value]
-        self.I_gains = [i_value, i2_value, i3_value, i4_value, i5_value]
-        self.D_gains = [d_value, d2_value, d3_value, d4_value, d5_value]
+        self.P_gains = [p_value, p2_value, p3_value, p4_value, p5_value, p6_value]
+        self.I_gains = [i_value, i2_value, i3_value, i4_value, i5_value, i6_value]
+        self.D_gains = [d_value, d2_value, d3_value, d4_value, d5_value, d6_value]
 
         # self.profile_velocities = [10, 10, 10, 10, 10, 10]
         # 10 was working
