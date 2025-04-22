@@ -1,27 +1,28 @@
 from mobilegello.Dynmx.robot import Robot
 from mobilegello.Dynmx.dynamixel import Dynamixel
-from mobilegello.Dynmx.get_hardware_offset import ArmOffset
+# from mobilegello.Dynmx.get_hardware_offset import ArmOffset
 import numpy as np
-from scipy.spatial.transform import Rotation
+# from scipy.spatial.transform import Rotation
 import time
 from math import pi
 import sys
 import termios
 import tty
 
-from mobilegello.PeterCorke.Gello import GELLO
-from spatialmath import SE3
+# from mobilegello.PeterCorke.Gello import GELLO
+# from spatialmath import SE3
+
 
 class GELLOcontroller:
 
     def __init__(self, Robot_str: str, torque_start=False) -> None:
-        print("Initializing GELLO Controller")
+        # print("Initializing GELLO Controller")
 
         if Robot_str == "doodle":
             self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
             self.baudrate = 57600
             self.servo_ids = [1, 2, 3, 4, 5, 6]
-            print("Passive Connected")
+            # print("Passive Connected")
         # elif Robot_str == "Follower":
         #     self.device_name = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT8J0W3F-if00-port0"
         #     self.baudrate = 4000000
@@ -41,36 +42,120 @@ class GELLOcontroller:
 
         self.dynamixel = Dynamixel.Config(baudrate=self.baudrate, device_name=self.device_name).instantiate()
         self.robot = Robot(self.dynamixel, servo_ids=self.servo_ids)
+        self.camera_control = Robot(self.dynamixel, servo_ids=[9, 10])
         # self.petercorke = GELLO()
 
         if torque_start:
-            print("Starting Torque")
+            # print("Starting Torque")
             self.robot._enable_torque()
+            self.camera_control._enable_torque()
+            self.camera_control.dynamixel.set_profile_velocity(motor_id=9, velocity=40)
+            self.camera_control.dynamixel.set_profile_velocity(motor_id=10, velocity=40)
             # self.goto_controlled_home(self.encoder_home_CONFIG)
         else:
             self.robot._disable_torque()
+            self.camera_control._disable_torque()
 
         # time.sleep(2)
+        self.new_home = np.array([2068, 2010, 2094, 1885, 2124, 3150]) #rest position
+        self.config_1 = np.array([2338, 2447, 3393, 1740, 1994, 3710]) #pick up position - gripper open
+        self.config_2 = np.array([2338, 2447, 3393, 1740, 1994, 3100]) #pick up position - gripper closed
 
         if Robot_str == "doodle":        
             # set gains
             self.robot.set_gains()
             self.P_gains = [self.robot.read_p_gain(i) for i in self.servo_ids]
-            print("P gains: ", self.P_gains)
+            # print("P gains: ", self.P_gains)
             self.I_gains = [self.robot.read_i_gain(i) for i in self.servo_ids]
-            print("I gains: ", self.I_gains)
+            # print("I gains: ", self.I_gains)
             self.D_gains = [self.robot.read_d_gain(i) for i in self.servo_ids]
-            print("D gains: ", self.D_gains)
+            # print("D gains: ", self.D_gains)
             # set profile velocity
             self.robot.set_profile_velocity_()
             self.profile_velocities = [self.robot.read_profile_velocity(i) for i in self.servo_ids]
-            print("Profile Velocities: ", self.profile_velocities)
+            # print("Profile Velocities: ", self.profile_velocities)
 
             self.robot.set_profile_acceleration_()
             self.profile_accelerations = [self.robot.read_profile_acceleration(i) for i in self.servo_ids]
-            print("Profile Accelerations: ", self.profile_accelerations)
+            # print("Profile Accelerations: ", self.profile_accelerations)
 
 
+    # ________________________ Camera control Functions ______________________________________________________________________________________________
+    def read_camera_encoder_values(self, degrees=False):
+        """
+        Reads the encoder values of the robot.
+        :param
+        :return: list of encoder values in range [0, 4096]
+        """
+        return self.camera_control.read_position()
+    
+    def camera_turn_left(self):
+        """
+        Moves the camera to the desired configuration at a predefined speed.
+        """
+        config = [2655, 3115]
+        # if not self.encoders_in_limits(config):
+            # print("Target position is not in encoders limits")
+            # return
+        
+        self.camera_control.set_goal_pos(config)
+        print("Camera Turned Left ")
+
+
+    def camera_turn_right(self):
+        """
+        Moves the camera to the desired configuration at a predefined speed.
+        """
+        config = [1429, 3115]
+        # if not self.encoders_in_limits(config):
+            # print("Target position is not in encoders limits")
+            # return
+        
+        self.camera_control.set_goal_pos(config)
+        print("Camera Turned Right")
+
+
+    def camera_turn_up(self):
+        pass
+
+    def camera_turn_down(self):
+        pass
+
+    def camera_home(self):
+        """
+        Moves the camera to the desired configuration at a predefined speed.
+        """
+        config = [2048, 3115]
+        # if not self.encoders_in_limits(config):
+            # print("Target position is not in encoders limits")
+            # return
+        
+        self.camera_control.set_goal_pos(config)
+        print("Camera Reached Home")
+
+    # ______________________________________________________________________________________________________________________
+
+
+    def rest(self): 
+        self.goto_controlled_home(self.new_home)
+
+
+    def pickup(self):
+        self.goto_controlled_home(self.new_home)
+        self.goto_controlled_home(self.config_1)
+    
+    def pickup_complete(self):
+        self.goto_controlled_home(self.config_2)
+        self.goto_controlled_home(self.new_home)
+
+    def dropoff(self):
+        self.goto_controlled_home(self.new_home)
+        self.goto_controlled_home(self.config_2)
+    
+    def dropoff_complete(self):
+        self.goto_controlled_home(self.config_1)
+        self.goto_controlled_home(self.new_home)
+        
     def goto_home(self):
         """ Go to the home position of the robot """        
         print("Setting Home Position .........")
@@ -352,7 +437,7 @@ class GELLOcontroller:
         # if max(abs(diff)) > 5:
         self.robot.set_goal_pos(config)
         # Add delay to ensure the robot reaches the goal config
-        # print("Reached Goal Config")
+        print("Reached Goal Config")
 
     def goto_controlled_home(self, config):
         """
@@ -367,13 +452,13 @@ class GELLOcontroller:
         # else:
             # max_iter = 5
 
-# make below lines generalized with number of motors 
+        # make below lines generalized with number of motors 
         for i in range(6):
             encoder_values.append(np.linspace(self.robot.read_position()[i], config[i], max_iter).astype(int))
 
         for i in range(max_iter):
             # print(f"Moving to config {i}")
-            print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i])
+            # print(encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i])
             self.robot.set_goal_pos([encoder_values[0][i], encoder_values[1][i], encoder_values[2][i], encoder_values[3][i], encoder_values[4][i], encoder_values[5][i]])
             time.sleep(0.01) # adjust this value to change the speed of the robot
 
